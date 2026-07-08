@@ -14,14 +14,25 @@ jobs:
         with:
           channel: stable
 
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build iOS
         run: flutter build ipa --no-codesign
 
+      - name: Show output
+        run: |
+          pwd
+          find build -type f | sort
+          ls -R build/ios || true
+          ls -R build/ios/ipa || true
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ipa
-          path: build/ios/ipa
+          path: build/ios/ipa/**
+          if-no-files-found: error
