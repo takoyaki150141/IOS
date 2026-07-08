@@ -1,0 +1,44 @@
+name: boothwatch
+description: Boothのアイテム・ショップを軽量に追跡するアプリ
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # HTTP通信とHTMLパース
+  http: ^1.2.1
+  html: ^0.15.4
+
+  # ローカル保存 (iOS/Android/Windows全対応の軽量DB)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.3
+
+  # 状態管理 (シンプルなChangeNotifier方式)
+  provider: ^6.1.2
+
+  # UUID生成
+  uuid: ^4.4.0
+
+  # 外部ブラウザでBoothページを開く
+  url_launcher: ^6.3.0
+
+  # Booth表示用WebView（モバイル: webview_flutter / Windows: webview_windows）
+  webview_flutter: ^4.8.0
+  webview_windows: ^0.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.9
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,12 @@
+<!--
+  android/app/src/main/AndroidManifest.xml の <manifest> 直下、
+  <application> タグと同じ階層に追加してください。
+  Android 11 (API 30) 以降のパッケージ可視性制限に対応するため、
+  https/http リンクを外部ブラウザで開けるようにする設定です。
+-->
+<queries>
+    <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+    </intent>
+</queries>
