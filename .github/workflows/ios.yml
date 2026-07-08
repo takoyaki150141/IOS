@@ -8,31 +8,67 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
       - name: Flutter Doctor
         run: flutter doctor -v
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build iOS
-        run: flutter build ipa --no-codesign
-
-      - name: Show output
+      - name: Install CocoaPods
+        working-directory: ios
         run: |
+          pod install
+
+      - name: Build iOS App
+        run: flutter build ios --release --no-codesign
+
+      - name: Show Build Output
+        run: |
+          echo "===== Current Directory ====="
           pwd
-          find build -type f | sort
+
+          echo "===== Build Files ====="
+          find build -type f | sort || true
+
+          echo "===== build/ios ====="
           ls -R build/ios || true
-          ls -R build/ios/ipa || true
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+
+          mkdir -p build/ios/ipa
+
+          cd Payload
+          zip -r ../build/ios/ipa/Runner.ipa .
+          cd ..
+
+      - name: Verify IPA
+        run: |
+          echo "===== IPA ====="
+          ls -lh build/ios/ipa
+          file build/ios/ipa/Runner.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ipa
-          path: build/ios/ipa/**
+          name: Runner-IPA
+          path: build/ios/ipa/Runner.ipa
           if-no-files-found: error
+
+      - name: Upload Runner.app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Runner-App
+          path: build/ios/iphoneos/Runner.app
+          if-no-files-found: warn
