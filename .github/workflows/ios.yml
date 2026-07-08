@@ -1,4 +1,4 @@
-name: Build Flutter iOS
+name: Build Unsigned IPA
 
 on:
   workflow_dispatch:
@@ -15,36 +15,39 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install dependencies
-        run: flutter pub get
+      - run: flutter pub get
 
-      - name: Install CocoaPods
+      - name: Install Pods
         working-directory: ios
         run: pod install
 
-      - name: Build iOS
+      - name: Build Flutter iOS
         run: flutter build ios --release --no-codesign
 
-      - name: Create unsigned IPA
+      - name: Archive App
         run: |
-          mkdir -p build/ios/ipa/Payload
-          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/Runner.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO
 
-          cd build/ios/ipa
-          /usr/bin/zip -qry Runner.ipa Payload
+      - name: Create Unsigned IPA
+        run: |
+          mkdir Payload
+          cp -R build/Runner.xcarchive/Products/Applications/Runner.app Payload/
 
-          echo "Generated files:"
+          zip -qry Runner.ipa Payload
+
+      - name: Verify
+        run: |
           ls -lah
-          file Runner.ipa
+          unzip -l Runner.ipa
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: Runner-Unsigned-IPA
-          path: build/ios/ipa/Runner.ipa
-
-      - name: Upload Runner.app
-        uses: actions/upload-artifact@v4
-        with:
-          name: Runner-App
-          path: build/ios/iphoneos/Runner.app
+          path: Runner.ipa
