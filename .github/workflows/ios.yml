@@ -8,67 +8,43 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
-
-      - name: Install Dependencies
+      - name: Install dependencies
         run: flutter pub get
 
       - name: Install CocoaPods
         working-directory: ios
-        run: |
-          pod install
+        run: pod install
 
-      - name: Build iOS App
+      - name: Build iOS
         run: flutter build ios --release --no-codesign
 
-      - name: Show Build Output
+      - name: Create unsigned IPA
         run: |
-          echo "===== Current Directory ====="
-          pwd
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
 
-          echo "===== Build Files ====="
-          find build -type f | sort || true
+          cd build/ios/ipa
+          /usr/bin/zip -qry Runner.ipa Payload
 
-          echo "===== build/ios ====="
-          ls -R build/ios || true
-
-      - name: Create IPA
-        run: |
-          mkdir -p Payload
-          cp -R build/ios/iphoneos/Runner.app Payload/
-
-          mkdir -p build/ios/ipa
-
-          cd Payload
-          zip -r ../build/ios/ipa/Runner.ipa .
-          cd ..
-
-      - name: Verify IPA
-        run: |
-          echo "===== IPA ====="
-          ls -lh build/ios/ipa
-          file build/ios/ipa/Runner.ipa
+          echo "Generated files:"
+          ls -lah
+          file Runner.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Runner-IPA
+          name: Runner-Unsigned-IPA
           path: build/ios/ipa/Runner.ipa
-          if-no-files-found: error
 
       - name: Upload Runner.app
         uses: actions/upload-artifact@v4
         with:
           name: Runner-App
           path: build/ios/iphoneos/Runner.app
-          if-no-files-found: warn
