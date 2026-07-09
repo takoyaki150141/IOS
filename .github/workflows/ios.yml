@@ -1,4 +1,4 @@
-name: Build Flutter iOS
+name: Build Flutter iOS (Unsigned IPA)
 
 on:
   workflow_dispatch:
@@ -8,9 +8,11 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
@@ -18,7 +20,7 @@ jobs:
       - name: Flutter Doctor
         run: flutter doctor -v
 
-      - name: Install dependencies
+      - name: Get Packages
         run: flutter pub get
 
       - name: Build iOS
@@ -26,9 +28,49 @@ jobs:
 
       - name: Locate Runner.app
         run: |
+          echo "Searching Runner.app..."
           find build -name "Runner.app" -type d
 
-      - name: Show Build Output
+      - name: Create Unsigned IPA
         run: |
-          find build -type f | sort
-          ls -R build || true
+          set -e
+
+          APP_PATH=$(find build -name "Runner.app" -type d | head -1)
+
+          echo "Using app:"
+          echo "$APP_PATH"
+
+          rm -rf Payload
+          rm -f Runner.ipa
+
+          mkdir Payload
+
+          cp -R "$APP_PATH" Payload/
+
+          /usr/bin/zip -qry Runner.ipa Payload
+
+          echo "===== IPA INFO ====="
+          ls -lh Runner.ipa
+          unzip -l Runner.ipa | head -20
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Runner-Unsigned-IPA
+          path: Runner.ipa
+          if-no-files-found: error
+
+      - name: Upload Runner.app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Runner-App
+          path: |
+            build/ios/iphoneos/Runner.app
+            build/ios/Release-iphoneos/Runner.app
+          if-no-files-found: warn
+
+      - name: Show Build Files
+        if: always()
+        run: |
+          echo "===== BUILD TREE ====="
+          find build -print
