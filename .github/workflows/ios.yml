@@ -1,4 +1,4 @@
-name: Build Unsigned IPA
+name: Build Flutter iOS
 
 on:
   workflow_dispatch:
@@ -15,35 +15,20 @@ jobs:
           channel: stable
           cache: true
 
-      - run: flutter pub get
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
-      - name: Install Pods
-        working-directory: ios
-        run: pod install
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Build Flutter
+      - name: Build iOS
         run: flutter build ios --release --no-codesign
 
-      - name: Archive
+      - name: Locate Runner.app
         run: |
-          xcodebuild \
-            -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath build/Runner.xcarchive \
-            archive \
-            CODE_SIGNING_ALLOWED=NO
+          find build -name "Runner.app" -type d
 
-      - name: Export IPA
+      - name: Show Build Output
         run: |
-          xcodebuild \
-            -exportArchive \
-            -archivePath build/Runner.xcarchive \
-            -exportPath build/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ipa
-          path: build/ipa
+          find build -type f | sort
+          ls -R build || true
