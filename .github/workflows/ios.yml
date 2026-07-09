@@ -28,48 +28,57 @@ jobs:
 
       - name: Locate Runner.app
         run: |
-          echo "Searching Runner.app..."
+          echo "Searching for Runner.app..."
           find build -name "Runner.app" -type d
 
-      - name: Create Unsigned IPA
+      - name: Create Runner.ipa.zip
         run: |
           set -e
 
           APP_PATH=$(find build -name "Runner.app" -type d | head -1)
 
-          echo "Using app:"
+          if [ -z "$APP_PATH" ]; then
+            echo "Runner.app not found!"
+            exit 1
+          fi
+
+          echo "Using:"
           echo "$APP_PATH"
 
           rm -rf Payload
-          rm -f Runner.ipa
+          rm -f Runner.ipa.zip
 
           mkdir Payload
 
           cp -R "$APP_PATH" Payload/
 
-          /usr/bin/zip -qry Runner.ipa Payload
+          /usr/bin/zip -qry Runner.ipa.zip Payload
 
-          echo "===== IPA INFO ====="
-          ls -lh Runner.ipa
-          unzip -l Runner.ipa | head -20
+          echo ""
+          echo "===== CREATED ====="
+          ls -lh Runner.ipa.zip
 
-      - name: Upload IPA
+          echo ""
+          echo "===== CONTENTS ====="
+          unzip -l Runner.ipa.zip | head -20
+
+      - name: Upload Runner.ipa.zip
         uses: actions/upload-artifact@v4
         with:
-          name: Runner-Unsigned-IPA
-          path: Runner.ipa
+          name: Runner.ipa.zip
+          path: Runner.ipa.zip
           if-no-files-found: error
 
       - name: Upload Runner.app
         uses: actions/upload-artifact@v4
         with:
-          name: Runner-App
+          name: Runner.app
           path: |
             build/ios/iphoneos/Runner.app
             build/ios/Release-iphoneos/Runner.app
           if-no-files-found: warn
 
-      - name: Show Build Files
+      - name: Show Build Tree
         if: always()
         run: |
           echo "===== BUILD TREE ====="
